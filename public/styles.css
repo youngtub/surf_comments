@@ -71,6 +71,17 @@ body p {
   left: 0;
 }
 
+.replyButton {
+    background-color: #9AADBF;
+    border: none;
+    color: black;
+    padding: 5px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 13px;
+}
+
 #sidemenu, #expand {
   position: fixed;
 }

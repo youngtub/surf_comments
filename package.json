@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "antd": "^2.13.8",
+    "antd": "^2.13.10",
     "axios": "^0.17.0",
     "body-parser": "^1.18.2",
     "d3": "^4.11.0",

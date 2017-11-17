@@ -2,10 +2,13 @@ import React from 'react';
 import * as d3 from 'd3';
 import InfoPanel from './InfoPanel';
 import Surch from '../Surch/Surch';
+import ReplyToComment from '../Sections/ReplyToComment';
+import ReplyButton from '../Sections/ReplyButton';
 import {Grid, Row, Col, ListGroup, ListGroupItem, Button} from 'react-bootstrap';
 import $ from 'jquery';
 import axios from 'axios';
 import tip from 'd3-tip';
+import ReactDOM from 'react-dom';
 
 class VizPanel extends React.Component {
   constructor(props) {
@@ -28,6 +31,7 @@ class VizPanel extends React.Component {
     this.sendRequestForArtist = this.sendRequestForArtist.bind(this);
     this.addCommentCB = this.addCommentCB.bind(this);
     this.getNodeSize = this.getNodeSize.bind(this);
+    this.replyToCommentCallback = this.replyToCommentCallback.bind(this);
   }
 
   componentWillMount() {
@@ -203,30 +207,18 @@ if (label === 'text') {
       console.log('selected node', d)
       var tooltip = tip()
       .attr('class', 'd3-tip')
+      .attr('id', 'tipo')
       .offset([-10, 0])
-      .html(d => {
-        console.log('D IN TOOLTIP', d)
-        return `<Button id="${d.id+'open'}"> Reply ${(d.children.length || 0)} </Button>`
-      })
+
       node.call(tooltip)
       tooltip.show(d)
 
-      $(`#${d.id+'open'}`).on('click', function (e) {
-        var reply = ''
-        $(`#${d.id+'open'}`).html(`
-          <input id="${d.id+'input'}" placeholder='enter reply' type='text' autofocus=true></input>
-          <button id="${d.id+'submit'}">ok</button>
-          `);
-          $(`#${d.id+'input'}`).on('keyup', function (e) {
-            e.preventDefault();
-            reply+=e.key
-          })
+      ReactDOM.render(<ReplyButton id={d.id+'open'} parent={d} openReplyCb={openReply} tooltipo={tooltip}/>, document.getElementById('tipo'));
 
-          $(`#${d.id+'submit'}`).on('click', function () {
-            tooltip.hide()
-            that.replyToComment(d, reply)
-          })
-      })
+      function openReply() {
+        ReactDOM.unmountComponentAtNode(document.getElementById('tipo'))
+        ReactDOM.render(<ReplyToComment id={d.id+'reply'} parent={d} replyToCommentCallback={that.replyToCommentCallback} tooltipo={tooltip}/>, document.getElementById('tipo'));
+      }
 
       var relatedLinks = that.state.linksLibrary.filter(link => {
         return link.source.id === d.id || link.target.id === d.id;
@@ -269,7 +261,8 @@ if (label === 'text') {
 
   };
 
-  replyToComment = (comment, reply) => {
+  replyToCommentCallback(comment, reply) {
+    ReactDOM.unmountComponentAtNode(document.getElementById('tipo'))
     console.log('target comment: ', comment);
     console.log('new reply: ', reply);
     let newId = `${'C'+this.state.commentsLibrary.length}`
