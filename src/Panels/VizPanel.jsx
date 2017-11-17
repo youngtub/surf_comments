@@ -207,17 +207,17 @@ if (label === 'text') {
       console.log('selected node', d)
       var tooltip = tip()
       .attr('class', 'd3-tip')
-      .attr('id', 'tipo')
+      .attr('id', `tipo${d.id}`)
       .offset([-10, 0])
 
       node.call(tooltip)
       tooltip.show(d)
 
-      ReactDOM.render(<ReplyButton id={d.id+'open'} parent={d} openReplyCb={openReply} tooltipo={tooltip}/>, document.getElementById('tipo'));
+      ReactDOM.render(<ReplyButton id={d.id+'open'} parent={d} openReplyCb={openReply} tooltipo={tooltip}/>, document.getElementById(`tipo${d.id}`));
 
       function openReply() {
-        ReactDOM.unmountComponentAtNode(document.getElementById('tipo'))
-        ReactDOM.render(<ReplyToComment id={d.id+'reply'} parent={d} replyToCommentCallback={that.replyToCommentCallback} tooltipo={tooltip}/>, document.getElementById('tipo'));
+        ReactDOM.unmountComponentAtNode(document.getElementById(`tipo${d.id}`))
+        ReactDOM.render(<ReplyToComment id={d.id+'reply'} parent={d} replyToCommentCallback={that.replyToCommentCallback} tooltipo={tooltip}/>, document.getElementById(`tipo${d.id}`));
       }
 
       var relatedLinks = that.state.linksLibrary.filter(link => {
@@ -262,7 +262,7 @@ if (label === 'text') {
   };
 
   replyToCommentCallback(comment, reply) {
-    ReactDOM.unmountComponentAtNode(document.getElementById('tipo'))
+    ReactDOM.unmountComponentAtNode(document.getElementById(`tipo${comment.id}`))
     console.log('target comment: ', comment);
     console.log('new reply: ', reply);
     let newId = `${'C'+this.state.commentsLibrary.length}`
