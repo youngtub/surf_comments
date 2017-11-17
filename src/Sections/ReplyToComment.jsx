@@ -1,6 +1,6 @@
 import React from 'react';
 import {Input, Button, Icon} from 'antd';
-const TextArea = Input.TextArea;
+const {TextArea} = Input;
 
 class ReplyToComment extends React.Component {
   constructor(props) {
@@ -25,7 +25,7 @@ class ReplyToComment extends React.Component {
   render() {
     return (
       <div>
-        <TextArea value={this.state.val} onChange={this.handleChange} placeholder='enter reply' counter={true}/>
+        <TextArea value={this.state.val} onChange={this.handleChange} placeholder='enter reply'/>
         <hr/>
         <Button >Cancel</Button>
         <Button type='primary' onClick={this.handleSubmit}>Submit</Button>
