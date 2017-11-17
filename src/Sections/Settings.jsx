@@ -1,6 +1,6 @@
 import React from 'react';
 // import {Grid, Row, Col} from 'react-bootstrap';
-import {Grid, Row, Col, ButtonToolbar, ToggleButtonGroup, ToggleButton} from 'react-bootstrap';
+import {Grid, Row, Col} from 'react-bootstrap';
 import $ from 'jquery';
 import {Slider, Button, Checkbox, Radio} from 'antd';
 const CheckboxGroup = Checkbox.Group;
@@ -13,9 +13,9 @@ class Settings extends React.Component {
     this.state = {
       showLinks: false,
       roles: ['rapper', 'producer'],
-      label: 'text',
+      label: 'circles',
       circleSize: 15,
-      linkDistance: 200,
+      linkDistance: 230,
       artistNumber: 7
     }
     this.hideLinks = this.hideLinks.bind(this);
@@ -27,7 +27,8 @@ class Settings extends React.Component {
     this.toggleLabel = this.toggleLabel.bind(this);
   }
 
-  componentDidUpdate() {
+  componentWillMount() {
+
   }
 
   hideLinks() {
@@ -150,7 +151,7 @@ class Settings extends React.Component {
 
               <RadioGroup onChange={this.toggleLabel} value={this.state.label}>
                   <RadioButton value="text">Text</RadioButton>
-                  <RadioButton value="image">Image</RadioButton>
+                  <RadioButton value="circles">Circles</RadioButton>
               </RadioGroup>
               {/*<ToggleButtonGroup style={button} type="radio" name='label' value={this.state.labelNum} onChange={this.toggleLabel}>
                 <ToggleButton bsSize='small' value={1}>Text</ToggleButton>

@@ -84,7 +84,7 @@ class Contribute extends React.Component {
 
             <ListGroup>
               {this.state.suggestedArtists.map((artist, i) => (
-                <Row>
+                <Row key={i}>
                     <ListGroupItem key={i} style={artistListEntry}>
                       <Col md={9}>
                         {artist.name}

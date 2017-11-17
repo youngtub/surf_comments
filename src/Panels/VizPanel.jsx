@@ -2,21 +2,22 @@ import React from 'react';
 import * as d3 from 'd3';
 import InfoPanel from './InfoPanel';
 import Surch from '../Surch/Surch';
-import {Grid, Row, Col} from 'react-bootstrap';
+import {Grid, Row, Col, ListGroup, ListGroupItem, Button} from 'react-bootstrap';
 import $ from 'jquery';
+import axios from 'axios';
+import tip from 'd3-tip';
 
 class VizPanel extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       // jsonObj: {},
-      artists: [],
-      songs: [],
+      root: {},
+      comments: [],
       links: [],
-      artistsLibrary: [],
+      commentsLibrary: [],
       linksLibrary: [],
-      songsLibrary: [],
-      selectedArtist: {},
+      selectedComment: {},
       selectedLink: {},
       display: ''
     }
@@ -24,20 +25,26 @@ class VizPanel extends React.Component {
     this.applySurchCb = this.applySurchCb.bind(this);
     this.infoPanelCallback = this.infoPanelCallback.bind(this);
     this.resetSurchCb = this.resetSurchCb.bind(this);
+    this.sendRequestForArtist = this.sendRequestForArtist.bind(this);
+    this.addCommentCB = this.addCommentCB.bind(this);
+    this.getNodeSize = this.getNodeSize.bind(this);
   }
 
-  componentDidMount() {
+  componentWillMount() {
     //axios call to db
 
     this.setState({
       // jsonObj: jsonData,
-      artists: jsonData.nodes,
-      artistsLibrary: jsonData.nodes,
-      songs: jsonData.songs,
-      songsLibrary: jsonData.songs,
+      root: jsonData.nodes[0],
+      comments: jsonData.nodes,
+      commentsLibrary: jsonData.nodes,
       links: jsonData.links,
-      linksLibrary: jsonData.links
-    }, this.generateCharts);
+      linksLibrary: jsonData.links,
+      selectedComment: jsonData.nodes[0]
+    }, () => {
+      this.generateCharts();
+      this.sendRequestForArtist();
+    });
 
   };
 
@@ -46,9 +53,17 @@ class VizPanel extends React.Component {
     setTimeout(() => this.generateCharts(), 100)
   }
 
+  sendRequestForArtist() {
+    // var artistName = 'Young Thug';
+    // axios.get('/api/getArtistData', {params: {artistName}})
+    // .then((res) => {
+    //   console.log('ARTIST DATA', res.data)
+    // })
+  }
+
   generateCharts() {
-
-
+    var that = this;
+    console.log('STATE in gen charts', this.state)
     d3.select('#canvas').selectAll('svg').remove();
 
     var width = 960,
@@ -58,67 +73,49 @@ class VizPanel extends React.Component {
         .attr("width", width)
         .attr("height", height);
 
-    var linkDistance = this.props.settings.linkDistance || 200;
-    var circleSize = this.props.settings.circleSize || 12;
+    var linkDistance = this.props.settings.linkDistance || 250;
+    var circleSize = this.props.settings.circleSize || 15;
     var artistNum = this.props.settings.artistNumber || 7;
     var roles = this.props.settings.roles || ['rapper', 'producer'];
-    var label = this.props.settings.label || 'text';
+    var label = this.props.settings.label || 'circles';
 
-    var limitedArtists = this.state.artists.filter((artist, i) => {
-      return i < artistNum && roles.includes(artist.role);
-    })
-
-    var limitedArtistsIds = limitedArtists.reduce((acc, curr) => {
-      acc.push(curr.id); return acc;
-    }, [])
-    var limitedLinks = this.state.linksLibrary.filter((link, i) => {
-      // console.log('link this time', link.source)
-      return limitedArtistsIds.includes(link.source.id) && limitedArtistsIds.includes(link.target.id) || limitedArtistsIds.includes(link.source) && limitedArtistsIds.includes(link.target)
-    })
-    // console.log('LTDLINKS', limitedLinks)
-    var nodes = d3.forceSimulation(limitedArtists)
-    .force("charge", d3.forceManyBody().strength(-100))
-    .force("link", d3.forceLink(this.state.links)
+    var nodes = d3.forceSimulation(this.state.commentsLibrary)
+    .force("charge", d3.forceManyBody().strength(-150))
+    .force("link", d3.forceLink(this.state.linksLibrary)
       .distance((d) => {
-        return d.value > 0 ? linkDistance/Math.pow(d.value, 1) : linkDistance;
+        return d.value > 0 ? linkDistance/(d.value*1.5) : linkDistance;
       })
-      .strength((d) => {
-        return d.value > 0 ? d.value*2 : 1;
-      })
+      // .strength((d) => {
+      //   return d.value > 0 ? d.value : 0;
+      // })
       )
-    .force("center", d3.forceCenter(400, 300))
-    .force("gravity", d3.forceManyBody().strength(-50))
+    .force("center", d3.forceCenter(420, 380))
+    .force("gravity", d3.forceManyBody().strength(-100))
     // .force("distance", d3.forceManyBody(100))
 
     .force('collision', d3.forceCollide().radius(function(d) {
-      return 30
+      // console.log('RADD', d)
+      return 10
     }))
     .force("size", d3.forceManyBody([width, height]));
 
-    var link = svg.selectAll(".link").data(limitedLinks).enter()
+    var link = svg.selectAll(".link").data(this.state.linksLibrary).enter()
         .append("line")
-        .attr("class", (d) => `link ${d.source.name.split(' ').join('')} ${d.target.name.split(' ').join('')}`)
-        .attr("stroke-width", (d) => d.value*3);
+        .attr("class", (d) => `${d.source.id} ${d.target.id} link`)
+        .attr("stroke-width", (d) => d.value*5);
 
-        // .attr("height", (d) => d.value/2)
-          // .call(force.drag);
           $('.link').toggle();
 
     link.on("click", (d) => {
         console.log('selected link', d);
 
-        var songsArr = this.state.songsLibrary.filter(song => {
-          return d.songList.includes(song.id)
-        })
-
         this.setState({
           display: 'link',
-          selectedLink: d,
-          songs: songsArr
+          selectedLink: d
         })
       });
 
-var node = svg.selectAll(".node").data(limitedArtists).enter()
+var node = svg.selectAll(".node").data(this.state.comments).enter()
     .append("g").attr("class", "node")
     .call(d3.drag()
             .on('start', dragstarted)
@@ -151,60 +148,112 @@ function dragended() {
 // .attr("xlink:href", "resources/images/check.png")
 
 
-
-if (label === 'image') {
-
-  node.append("circle")
-      .attr("r", circleSize*2.3)
-      .attr("fill", function(d) { return d.role === 'rapper' ? '#241587' : '#3f88a3' })
-      .attr("class", (d) => `${d.role} ${d.name} node`);
-
-  node.append("svg:image")
-      .attr('x', -circleSize*1.5)
-      .attr('y', -circleSize*1.5)
-      .attr('width', circleSize*3)
-      .attr('height', circleSize*3)
-      .attr("border-radius", '50%')
-      .attr("xlink:href", (d) => `${d.thumbnail}`)
-} else {
-  node.append("circle")
-      .attr("r", circleSize)
-      .attr("fill", function(d) { return d.role === 'rapper' ? '#241587' : '#3f88a3' })
-      .attr("class", (d) => `${d.role} ${d.name} node`);
-
-  node.append("text")
-      .attr("dx", 15).attr("dy", ".70em")
-      .text(function(d) { return d.name })
-      .style("font-size", "14px")
-      .attr("class", (d) => `${d.role} ${d.name}`)
+var colors = {
+  0: '#424874',
+  1: '#6D435A',
+  2: '#4E598C',
+  3: '#0C6291',
+  4: '#5C6672',
+  5: '#3A435E'
 }
 
-    node.on('click', d => {
+if (label === 'text') {
 
-      var songsArr = this.state.songsLibrary.filter(song => {
-        return d.songs.includes(song.id)
+  node.append("rect")
+      .attr('x', (d) => { return d.id === 0 ? -125 : -200/(d.level+1)})
+      .attr('y', (d) => { return d.id === 0 ? -75 : -50/(d.level+1)})
+      .attr('rx', 20)
+      .attr('ry', 20)
+      .attr('width', (d) => { return d.id === 0 ? 200 : 400/(d.level+1)})
+      .attr('height', (d) => {return d.id === 0 ? 150 : 100/(d.level+1)})
+      .attr("fill", function(d) { return d.id === 0 ? '#241587' : '#3f88a3' })
+      .attr("class", (d) => `${d.id} node`);
+
+  node.append("text")
+      .attr("dx", -50).attr("dy", -20)
+      .text(function(d) { return d.text })
+      .style("font-size", "14px")
+      .style("fill", (d) => d.id === 'C0' ? '#eff0f2' : '#1b1b1c')
+
+} else {
+
+  node.append("circle")
+      .attr("r", (d) => d.id === 'C0' ? 75 : 5*circleSize/(d.level+1) )
+      .attr("fill", d => colors[d.level])
+      .attr("class", (d) => `${d.id} node`);
+
+  node.append("text")
+      .attr("dx", d => d.id === 'C0' ? -(circleSize*5) : this.getNodeSize(d.level)+15)
+      .attr("dy", d => d.id === 'C0' ? -20 : 0)
+      .text(function(d) { return d.text })
+      .style("font-size", "14px")
+      .style("fill", (d) => d.id === 'C0' ? '#eff0f2' : '#1b1b1c')
+
+  node.append("svg:image")
+      .attr('x', d => -this.getNodeSize(d.level))
+      .attr('y', d => -0.4*this.getNodeSize(d.level))
+      .attr('width', d => 2*this.getNodeSize(d.level))
+      .attr('height', d => 2*this.getNodeSize(d.level))
+      .attr("border-radius", '50%')
+      .attr("xlink:href", (d) => `${d.url || ''}`)
+
+}
+
+    node.on('click',  function(d){
+      console.log('selected node', d)
+      var tooltip = tip()
+      .attr('class', 'd3-tip')
+      .offset([-10, 0])
+      .html(d => {
+        console.log('D IN TOOLTIP', d)
+        return `<Button id="${d.id+'open'}"> Reply ${(d.children.length || 0)} </Button>`
       })
-      let artist = d.name;
-      var relatedLinks = this.state.linksLibrary.filter(link => {
-        // console.log('LINK', link)
-        return link.source.name === artist || link.target.name === artist;
+      node.call(tooltip)
+      tooltip.show(d)
+
+      $(`#${d.id+'open'}`).on('click', function (e) {
+        var reply = ''
+        $(`#${d.id+'open'}`).html(`
+          <input id="${d.id+'input'}" placeholder='enter reply' type='text' autofocus=true></input>
+          <button id="${d.id+'submit'}">ok</button>
+          `);
+          $(`#${d.id+'input'}`).on('keyup', function (e) {
+            e.preventDefault();
+            reply+=e.key
+          })
+
+          $(`#${d.id+'submit'}`).on('click', function () {
+            tooltip.hide()
+            that.replyToComment(d, reply)
+          })
       })
-      console.log('ARTIST', artist)
 
-      // $(`.${artist.split(' ').join('')}`).css('display', 'inline');
-      $('.link').css('display', 'none')
-      $(`.${artist.split(' ').join('')}.link`).toggle();
+      var relatedLinks = that.state.linksLibrary.filter(link => {
+        return link.source.id === d.id || link.target.id === d.id;
+      })
 
-      this.setState({
-        selectedArtist: d,
+      console.log('RELATED LINKS', relatedLinks)
+
+      // $('.link').css('display', 'none')
+      $(`.${d.id}.link`).css('display', 'inline')
+
+      that.setState({
+        selectedComment: d,
         display: 'artist',
-        songs: songsArr,
         links: relatedLinks
       }, () => {
-        console.log('artist in state', this.state.selectedArtist)
+        console.log('comment in state', that.state.selectedComment)
         // this.generateCharts();
       })
-    });
+    })
+    .on('mouseover', d => {
+      this.setState({
+        selectedComment: d,
+        display: 'artist'
+      })
+
+    })
+    // .on('mouseout', tooltip.hide)
 
       nodes.on("tick", function() {
         link.attr("x1", function(d) { return d.source.x; })
@@ -212,10 +261,47 @@ if (label === 'image') {
             .attr("x2", function(d) { return d.target.x; })
             .attr("y2", function(d) { return d.target.y; });
 
-        node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+            node.attr("transform", function(d) {
+              var xcoord = d.x > width / 2 ? Math.min(d.x, width-circleSize) : Math.max(circleSize, d.x);
+              var ycoord = d.y > height / 2 ? Math.min(d.y-30, height-(circleSize+30)) : Math.max(circleSize, d.y);
+              return "translate(" + xcoord + "," + ycoord + ")"; });
       });
 
   };
+
+  replyToComment = (comment, reply) => {
+    console.log('target comment: ', comment);
+    console.log('new reply: ', reply);
+    let newId = `${'C'+this.state.commentsLibrary.length}`
+    console.log('NEW ID', newId)
+    let newReplyObj = { id: newId, text: reply, level: comment.level+1, children: [], parent: comment.id , author: "User" };
+    let commentIds = this.state.commentsLibrary.reduce((acc, curr) => {acc.push(curr.id); return acc;}, []);
+    let parentCommentInd = commentIds.indexOf(comment.id);
+    let newLinkObj = {source: parentCommentInd, target: this.state.commentsLibrary.length, value: 1};
+    let updatedComments = this.state.commentsLibrary.slice()
+    updatedComments.push(newReplyObj);
+    let updatedLinks = this.state.linksLibrary.slice()
+    updatedLinks.push(newLinkObj);
+    console.log('updated comments', updatedComments);
+    console.log('updated links', updatedLinks)
+    this.setState({
+      comments: updatedComments,
+      commentsLibrary: updatedComments,
+      links: updatedLinks,
+      linksLibrary: updatedLinks
+    }, this.generateCharts)
+  }
+
+  getNodeSize(level) {
+    let circleSize = this.props.settings.circleSize || 15;
+    var sizes = {
+      0: circleSize*2.3,
+      1: circleSize*1.7,
+      2: circleSize*1.3,
+      3: circleSize
+    }
+    return sizes[level];
+  }
 
   applySurchCb(surchArr) {
     // console.log('surch array', surchArr)
@@ -263,6 +349,24 @@ if (label === 'image') {
     })
   };
 
+  addCommentCB(text, replyComment) {
+    let newId = this.state.commentsLibrary.length;
+    let newLevel = replyComment.level+1;
+    let newParent = replyComment.id;
+    let newCommentObj = { id: newId, text: text, level: newLevel, children: null, parent: newParent, author: "newUserComment" };
+    var newComments = this.state.commentsLibrary;
+    var newLinkObj = { source: newParent, target: newId, value: 1 }
+    var newLinks = this.state.linksLibrary;
+    newLinks.push(newLinkObj);
+    newComments.push(newCommentObj);
+    this.setState({
+      commentsLibrary: newComments,
+      comments: newComments,
+      linksLibrary: newLinks,
+      links: newLinks
+    }, this.generateCharts)
+  }
+
   render() {
     return (
         <Grid fluid={true}>
@@ -275,17 +379,21 @@ if (label === 'image') {
 
             <Col md={3} style={border}>
 
-              <Row className="show-grid">
-                  <InfoPanel selectedArtist={this.state.selectedArtist} selectedLink={this.state.selectedLink}
-                    display={this.state.display} artists={this.state.artists}
-                    songs={this.state.songs} links={this.state.linksLibrary}
-                    infoPanelCallback={this.infoPanelCallback}
-                    />
-              </Row>
+              { this.props.showPanels ? (
+                  <div>
+                  <Row className="show-grid">
+                    <InfoPanel selectedComment={this.state.selectedComment} selectedLink={this.state.selectedLink}
+                      display={this.state.display} comments={this.state.comments}
+                      links={this.state.linksLibrary} root={this.state.root}
+                      infoPanelCallback={this.infoPanelCallback} addCommentCB={this.addCommentCB}
+                      />
+                  </Row>
 
-              <Row className="show-grid">
-                  <Surch allArtists={this.state.artistsLibrary} applySurchCb={this.applySurchCb} reset={this.resetSurchCb}/>
-              </Row>
+                  <Row className="show-grid">
+                    <Surch allArtists={this.state.artistsLibrary} applySurchCb={this.applySurchCb} reset={this.resetSurchCb}/>
+                  </Row>
+                  </div>
+                ) : '' }
 
             </Col>
 
@@ -303,151 +411,64 @@ const border = {
 
 const jsonData = {
   "nodes": [
-    {
-      "id": 0,
-      "name": "Metro Boomin",
-      "role": "producer",
-      "thumbnail": "http://bluntiq.com/media/2017/06/1498194822_4290326ce261592ad7c489abca79f4c4-1.jpg",
-      "collabs": {
-        "1": 2,
-        "2": 1,
-        "3": 1,
-        "4": 1,
-        "5": 2
-      },
-      "songs": [0, 1, 2, 3, 4]
-    },
-    {
-      "id": 1,
-      "name": "Offset",
-      "role": "rapper",
-      "thumbnail": "http://s3.amazonaws.com/hiphopdx-production/2016/03/Offset-Migos-827x620.jpg",
-      "collabs": {
-        "0": 2,
-        "2": 1,
-        "3": 1
-      },
-      "songs": [0, 1]
-    },
-    {
-      "id": 2,
-      "name": "Drake",
-      "role": "rapper",
-      "thumbnail": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Drake_and_Future_2016_Summer_Sixteen_Tour.jpg/220px-Drake_and_Future_2016_Summer_Sixteen_Tour.jpg",
-      "collabs": {
-        "0": 1,
-        "1": 1,
-        "5": 1,
-        "6": 1
-      },
-      "songs": [5]
-    },
-    {
-      "id": 3,
-      "name": "Lil Uzi Vert",
-      "role": "rapper",
-      "thumbnail": "http://blameebro.com/wp-content/uploads/2016/12/how-rich-is-lil-uzi-vert-liluziv.jpg",
-      "collabs": {
-        "0": 1,
-        "1": 1
-      },
-      "songs": [1]
-    },
-    {
-      "id": 4,
-      "name": "21 Savage",
-      "role": "rapper",
-      "thumbnail": "http://images.genius.com/66dcc06b58c51a9c3ed8d42abfdc4f3d.783x783x1.jpg",
-      "collabs": {
-        "0": 1
-      },
-      "songs": [2, 3]
-    },
-    {
-      "id": 5,
-      "name": "Future",
-      "role": "rapper",
-      "thumbnail": "http://s3.amazonaws.com/factmag-images/wp-content/uploads/2016/02/03003149/Future-2-25-16.png",
-      "collabs": {
-        "0": 2,
-        "4": 1,
-        "5": 1
-      },
-      "songs": [3, 4, 5]
-    },
-    {
-      "id": 6,
-      "name": "Zaytoven",
-      "role": "producer",
-      "thumbnail": "http://go.a3cfestival.com/hubfs/zaytoven-trap-music-definition-0.jpg",
-      "collabs": {
-        "2": 1,
-        "5": 1
-      },
-      "songs": [5]
-    }
-  ],
+  { id: 'C0', text: 'My dogs curious face', level: 0, children: [1, 2, 3], parent: null, author: 'BeagleBob7', url: "http://www.animalgenetics.us/images/canine/Beagle4.jpg"},
+  { id: 'C1', text: 'Same here! I think its a beagle thing', level: 1, children: [ 4, 5 ], parent: 'C0', author: "catnip47" },
+  { id: 'C2', text: 'Classic 30 degree head tilt', level: 1, children: [ 6 ], parent: 'C0', author: "jackrabbit5" },
+  { id: 'C3', text: 'When theres a treat in smellshot', level: 1, children: [ 7 ], parent: 'C0', author: "meanstack91" },
+  { id: 'C4', text: 'Nah my lab does too', level: 2, children: [ 8 ], parent: 'C1', author: "hooplahadup" },
+  { id: 'C5', text: 'Maybe! My pup does the same thing', level: 2, children: [], parent: 'C1', author: "bballoo" },
+  { id: 'C6', text: 'Lol u measured that shit', level: 2, children: [ 9 ], parent: 'C2', author: "timpumbo" },
+  { id: 'C7', text: 'Smellshot hahahaha', level: 2, children: [], parent: 'C3', author: "skrrrttt88" },
+  { id: 'C8', text: 'Agreed ya my dalmation been doing this since she was born', level: 3, children: [], parent: 'C4', author: "lil uzi horizont" },
+  { id: 'C9', text: 'eyeballed then verified with protractor mate', level: 3, children: [], parent: 'C6' , author: "bathtub gin"} ],
 
-  "songs": [
-    {
-      "id": 0,
-      "title": "No Complaints",
-      "rappers": [1, 2],
-      "producers": [0]
-    },
-    {
-      "id": 1,
-      "title": "Bad & Boujee (feat. Lil Uzi Vert)",
-      "rappers": [1, 3],
-      "producers": [0]
-    },
-    {
-      "id": 2,
-      "title": "No Heart",
-      "rappers": [4],
-      "producers": [0]
-    },
-    {
-      "id": 3,
-      "title": "X (feat. Future)",
-      "rappers": [4, 5],
-      "producers": [0]
-    },
-    {
-      "id": 4,
-      "title": "Purple Rain",
-      "rappers": [5],
-      "producers": [0]
-    },
-    {
-      "id": 5,
-      "title": "Used to This",
-      "rappers": [2, 5],
-      "producers": [6]
-    }
-  ],
   "links": [
-    {"source": 0, "target": 1, "value": 2, "songList": [0, 1] },
-    {"source": 0, "target": 2, "value": 1, "songList": [0] },
-    {"source": 0, "target": 3, "value": 1, "songList": [1] },
-    {"source": 0, "target": 4, "value": 2, "songList": [2, 3] },
-    {"source": 0, "target": 5, "value": 2, "songList": [3, 4] },
-    {"source": 0, "target": 6, "value": 0, "songList": [] },
-    {"source": 1, "target": 2, "value": 1, "songList": [0] },
-    {"source": 1, "target": 3, "value": 1, "songList": [1] },
-    {"source": 1, "target": 4, "value": 0, "songList": [] },
-    {"source": 1, "target": 5, "value": 0, "songList": [] },
-    {"source": 1, "target": 6, "value": 0, "songList": [] },
-    {"source": 2, "target": 5, "value": 1, "songList": [5] },
-    {"source": 2, "target": 3, "value": 0, "songList": [0] },
-    {"source": 2, "target": 4, "value": 0, "songList": [0] },
-    {"source": 4, "target": 3, "value": 0, "songList": [] },
-    {"source": 4, "target": 6, "value": 0, "songList": [] },
-    {"source": 4, "target": 5, "value": 1, "songList": [3] },
-    {"source": 6, "target": 5, "value": 1, "songList": [5] },
-    {"source": 6, "target": 2, "value": 1, "songList": [5] }
+  { source: 0, target: 1, value: 1 },
+  { source: 0, target: 2, value: 1 },
+  { source: 0, target: 3, value: 1 },
+  // { source: 0, target: 4, value: 0 },
+  // { source: 0, target: 5, value: 0 },
+  // { source: 0, target: 6, value: 0 },
+  // { source: 0, target: 7, value: 0 },
+  // { source: 0, target: 8, value: 0 },
+  // { source: 0, target: 9, value: 0 },
+  // { source: 1, target: 2, value: 0 },
+  // { source: 1, target: 3, value: 0 },
+  { source: 1, target: 4, value: 1 },
+  { source: 1, target: 5, value: 1 },
+  // { source: 1, target: 6, value: 0 },
+  // { source: 1, target: 7, value: 0 },
+  // { source: 1, target: 8, value: 0 },
+  // { source: 1, target: 9, value: 0 },
+  // { source: 2, target: 3, value: 0 },
+  // { source: 2, target: 4, value: 0 },
+  // { source: 2, target: 5, value: 0 },
+  { source: 2, target: 6, value: 1 },
+  // { source: 2, target: 7, value: 0 },
+  // { source: 2, target: 8, value: 0 },
+  // { source: 2, target: 9, value: 0 },
+  // { source: 3, target: 4, value: 0 },
+  // { source: 3, target: 5, value: 0 },
+  // { source: 3, target: 6, value: 0 },
+  { source: 3, target: 7, value: 1 },
+  // { source: 3, target: 8, value: 0 },
+  // { source: 3, target: 9, value: 0 },
+  // { source: 4, target: 5, value: 0 },
+  // { source: 4, target: 6, value: 0 },
+  // { source: 4, target: 7, value: 0 },
+  { source: 4, target: 8, value: 1 },
+  // { source: 4, target: 9, value: 0 },
+  // { source: 5, target: 6, value: 0 },
+  // { source: 5, target: 7, value: 0 },
+  // { source: 5, target: 8, value: 0 },
+  // { source: 5, target: 9, value: 0 },
+  // { source: 6, target: 7, value: 0 },
+  // { source: 6, target: 8, value: 0 },
+  { source: 6, target: 9, value: 1 },
+  // { source: 7, target: 8, value: 0 },
+  // { source: 7, target: 9, value: 0 },
+  // { source: 8, target: 9, value: 0 }
   ]
 }
-
 
 export default VizPanel;

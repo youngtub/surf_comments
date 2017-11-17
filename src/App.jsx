@@ -12,28 +12,15 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      settingsObj: {}
+      settingsObj: {},
+      showPanels: false
     }
     this.passStateInSettings = this.passStateInSettings.bind(this);
+    this.showPanelsCallback = this.showPanelsCallback.bind(this);
   }
 
   componentDidMount() {
-
-    const axiosConfigForRapGenius = {
-      method: 'get',
-      headers: {
-        'Authorization' : 'Bearer 58GF771pREfB7eqK6WhiZDu1qPrBVImmZsXI-MdYT0wj5lqQBIyOhSWJPcSOHOo2',
-        'Content-Type' : 'application/x-www-form-urlencoded',
-        'Access-Control-Allow-Origin' : '*',
-        'Access-control-allow-methods': 'GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS',
-        'crossdomain': 'true'
-      }
-    }
-
-    fetch(`http://api.genius.com/songs/737615`, axiosConfigForRapGenius)
-    .then((res) => {
-      console.log('DATA FROM REQUEST', res)
-    })
+    // axios.get('/api/test').then((res)=>console.log('test', res))
   }
 
   passStateInSettings(obj) {
@@ -42,12 +29,18 @@ class App extends Component {
     })
   }
 
+  showPanelsCallback() {
+    this.setState({
+      showPanels: !this.state.showPanels
+    })
+  }
+
   render() {
     return (
       <div className="App">
         <header className="App-header">
           <ScrollableAnchor id={'main'}>
-          <h2> InTheStudio </h2>
+          <h2> Comments </h2>
           </ScrollableAnchor>
         </header>
         <Grid fluid={true}>
@@ -55,17 +48,17 @@ class App extends Component {
 
         <Row>
           <Col md={2}>
-            <Menu passStateInSettings={this.passStateInSettings}/>
+            <Menu passStateInSettings={this.passStateInSettings} showPanelsCallback={this.showPanelsCallback}/>
           </Col>
 
           <Col md={10}>
-            <VizPanel settings={this.state.settingsObj}/>
+            <VizPanel settings={this.state.settingsObj} showPanels={this.state.showPanels}/>
           </Col>
 
         </Row>
 
 
-      <ScrollableAnchor id={'about'}>
+      {/*<ScrollableAnchor id={'about'}>
         <hr/>
       </ScrollableAnchor>
         <Row style={aboutStyle}>
@@ -79,7 +72,7 @@ class App extends Component {
         <Row>
           <Contribute />
         </Row>
-        </ScrollableAnchor>
+        </ScrollableAnchor>*/}
 
         <Row>
           <Col md={12} style={surfStyle}>
@@ -96,24 +89,13 @@ class App extends Component {
 }
 
 const surfStyle = {
-  float: 'right',
-  backgroundColor: '#dbdde0'
+  float: 'right'
+  // backgroundColor: '#dbdde0'
 }
 
-const black = {
-  color: 'black'
-}
-
-const menuStyle = {
-  position: 'fixed'
-}
-
-const expandButtonStyle = {
-  marginTop: '8%',
-  marginLeft: '1%',
-  position: 'fixed',
-  display: 'none'
-}
+// const black = {
+//   color: 'black'
+// }
 
 const aboutStyle = {
   backgroundColor: '#afbdd3'

@@ -1,7 +1,7 @@
 import React from 'react';
-import { Menu, Icon, Button, Anchor } from 'antd';
+import { Menu, Icon, Button } from 'antd';
 import Settings from './Settings.jsx';
-import {Grid, Row, Col} from 'react-bootstrap';
+import {Grid, Row} from 'react-bootstrap';
 const SubMenu = Menu.SubMenu;
 
 
@@ -11,11 +11,25 @@ class MenuBar extends React.Component {
     showSettings: false
   }
 
+  componentDidMount() {
+    setTimeout( () => {
+      var settings = {
+      showLinks: false,
+      roles: ['rapper', 'producer'],
+      label: 'circles',
+      circleSize: 15,
+      linkDistance: 230,
+      artistNumber: 7,
+    }
+    this.props.passStateInSettings(settings)
+  }, 700);
+  }
+
   toggleCollapsed = () => {
     this.setState({
       collapsed: !this.state.collapsed,
       showSettings: !this.state.showSettings
-    });
+    }, this.props.showPanelsCallback);
   }
 
   toggleSettings = () => {

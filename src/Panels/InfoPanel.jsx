@@ -1,158 +1,76 @@
 import React from 'react';
-import {Col, Row, Grid} from 'react-bootstrap';
-import {ListGroup, ListGroupItem} from 'react-bootstrap';
+import {Col, Row, Grid, ListGroup, ListGroupItem} from 'react-bootstrap';
+import {Input, Button} from 'antd';
+const {TextArea} = Input;
 
-const InfoPanel = (props) => {
+class InfoPanel extends React.Component {
+constructor(props) {
+  super(props);
+  this.state = {
+    commentVal: ''
+  }
+}
 
-  const calculateLinks = () => {
-    var relevantLinks = props.links.reduce((acc, curr) => {
-      if (curr.source.name === props.selectedArtist.name && curr.value > 0) {
-        acc[`${curr.target.name}`] = curr.value;
-      }
-      if (curr.target.name === props.selectedArtist.name && curr.value > 0) {
-        acc[`${curr.source.name}`] = curr.value;
-      }
-      return acc;
-    }, {})
-    var outputArr = [];
-    for (var key in relevantLinks) {
-      let tempObj = {
-        'name':key,
-        'count': relevantLinks[key]
-      }
-      outputArr.push(tempObj)
-    }
-    outputArr.sort((a,b)=>b.count-a.count);
-    return outputArr
+  componentWillMount() {
+    console.log('PROPS', this.props)
   }
 
-  return (
-    <div id='infoPanel'>
+  handleChange = (e) => {
+    this.setState({
+      commentVal: e.target.value
+    })
+  };
 
-    {props.display === 'artist' ? (
-      <Grid fluid={true}>
+  handleSubmit = () => {
+    let newText = this.state.commentVal;
+    this.props.addCommentCB(newText, this.props.selectedComment);
+    this.setState({
+      commentVal: ''
+    })
+  }
 
-
-      <Row>
-
-        <Col sm={12} md={12} style={centered}>
-
+  render() {
+    return (
+      <div id='infoPanel'>
+        <br/>
+        <Grid fluid={true}>
           <Row>
-            <h2>{props.selectedArtist.name}</h2>
-          </Row>
-
-          <Row>
-            <img src={props.selectedArtist.thumbnail} height={150} width={160}/>
-          </Row>
-
-          <Row>
-            {props.selectedArtist.role}
-          </Row>
-        </Col>
-
-      </Row>
-
-      <Row style={offset}>
-
-        <br/><hr/><br/>
-
-        <Col md={6}>
-          <h4 style={centered}> Songs </h4>
-          <br/>
-
-          <ListGroup>
-            {props.songs.map((song, i) => (
-              <ListGroupItem key={i}>
-                {song.title}
+            <Col md={1}></Col>
+            <Col md={10}>
+            <ListGroup>
+              <ListGroupItem>
+                <div>
+                  {this.props.selectedComment.url ? <img src={this.props.selectedComment.url} height={100} width={100} /> : null}
+                  <p> {this.props.selectedComment.text}</p>
+                  <p> - {this.props.selectedComment.author}</p>
+                </div>
               </ListGroupItem>
-            ))}
-          </ListGroup>
-        </Col>
-
-        <Col md={6}>
-          <h4 style={centered}> Collabs </h4>
-          <br/>
-          {calculateLinks(props.links).map((link, i) => (
-            <ListGroupItem key={i} onClick={() => props.infoPanelCallback(link.name)}>
-              {link.name} : {link.count}
-            </ListGroupItem>
-          ))}
-        </Col>
-
-      </Row>
-
-    </Grid>
-  ) : ''}
-
-    {props.display === 'link' ? (
-      <Grid fluid={true}>
-        <Row className="show-grid">
-
-          <Col sm={6} md={6} className='artist1' style={centered}>
-
-            <Row>
-              {props.selectedLink.source.name}
-            </Row>
-
-            <Row>
-              <img src={props.selectedLink.source.thumbnail} height={150} width={160}/>
-            </Row>
-
-            <Row>
-              {props.selectedLink.source.role}
-            </Row>
-
-          </Col>
-
-          <Col sm={6} md={6} className='artist2' style={centered}>
-
-            <Row>
-              {props.selectedLink.target.name}
-            </Row>
-
-            <Row>
-              <img src={props.selectedLink.target.thumbnail} height={150} width={160}/>
-            </Row>
-
-            <Row>
-              {props.selectedLink.target.role}
-            </Row>
-
-          </Col>
-
-        </Row>
-
-        <Row style={centered}>
-          <br/><hr/><br/>
-          <h4 style={centered}> Songs </h4>
-          <br/>
-          <Col md={3}></Col>
-          <Col md={6}>
-          <ListGroup>
-          {props.songs.map((song, i) => (
-            <ListGroupItem key={i}>
-              {song.title}
-            </ListGroupItem>
-          ))}
-          </ListGroup>
-        </Col>
-        <Col md={3}></Col>
-        </Row>
-
-      </Grid>
-
-    ) : ''}
-
-    {props.display === '' ? (
-      <Col md={12}>
-        <img src='https://drive.google.com/uc?id=1bEsmi0UXdfDE0awAY5O0u6U1bB3v0lZK' height={230} width={300}></img>
-        <br/><br/><br/>
-        <p>Click on an Artist or Link to learn more</p>
-      </Col>
-    ) : ''}
-
-    </div>
-  )
+            </ListGroup>
+            </Col>
+            <Col md={1}></Col>
+          </Row>
+          <Row>
+            <Col md={1}></Col>
+            <Col md={10}>
+            { this.props.selectedComment.level > 0 ? (
+              <Row>
+                <TextArea value={this.state.commentVal} onChange={this.handleChange} placeholder='Reply'/>
+                <Button type='primary' onClick={this.handleSubmit}>Submit</Button>
+              </Row>
+            ) : (
+              <Row>
+                <TextArea value={this.state.commentVal} onChange={this.handleChange} placeholder='Enter comment'/>
+                <Button type='primary' onClick={this.handleSubmit}>Submit</Button>
+              </Row>
+            )
+            }
+            </Col>
+            <Col md={1}></Col>
+          </Row>
+        </Grid>
+      </div>
+    )
+  }
 };
 
 const centered = {
