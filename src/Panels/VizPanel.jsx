@@ -7,9 +7,7 @@ import ReplyButton from '../Sections/ReplyButton';
 import {Grid, Row, Col, ListGroup, ListGroupItem, Button} from 'react-bootstrap';
 import $ from 'jquery';
 import axios from 'axios';
-import tip from 'd3-tip';
 import ReactDOM from 'react-dom';
-// import {ScatterTooltip} from 'react-d3-tooltip';
 
 class VizPanel extends React.Component {
   constructor(props) {
