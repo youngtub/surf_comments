@@ -17,17 +17,21 @@ class ReplyToComment extends React.Component {
   }
 
   handleSubmit = () => {
-    this.props.tooltipo.hide()
+    // this.props.tooltipo.hide()
     var parent = this.props.parent;
     this.props.replyToCommentCallback(parent, this.state.val)
   }
 
+  handleCancel = () => {
+    this.props.handleCancel()
+  }
+
   render() {
     return (
-      <div>
+      <div style={this.props.style}>
         <TextArea value={this.state.val} onChange={this.handleChange} placeholder='enter reply'/>
         <hr/>
-        <Button >Cancel</Button>
+        <Button onClick={this.handleCancel}>Cancel</Button>
         <Button type='primary' onClick={this.handleSubmit}>Submit</Button>
       </div>
     )

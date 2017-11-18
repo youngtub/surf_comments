@@ -9,6 +9,7 @@ import $ from 'jquery';
 import axios from 'axios';
 import tip from 'd3-tip';
 import ReactDOM from 'react-dom';
+// import {ScatterTooltip} from 'react-d3-tooltip';
 
 class VizPanel extends React.Component {
   constructor(props) {
@@ -22,20 +23,20 @@ class VizPanel extends React.Component {
       linksLibrary: [],
       selectedComment: {},
       selectedLink: {},
-      display: ''
+      display: '',
+      showTooltip: false,
+      tooltipPosition: {}
     }
     this.generateCharts = this.generateCharts.bind(this);
     this.applySurchCb = this.applySurchCb.bind(this);
     this.infoPanelCallback = this.infoPanelCallback.bind(this);
     this.resetSurchCb = this.resetSurchCb.bind(this);
-    this.sendRequestForArtist = this.sendRequestForArtist.bind(this);
-    this.addCommentCB = this.addCommentCB.bind(this);
     this.getNodeSize = this.getNodeSize.bind(this);
     this.replyToCommentCallback = this.replyToCommentCallback.bind(this);
+    this.getTooltipPosition = this.getTooltipPosition.bind(this);
   }
 
   componentWillMount() {
-    //axios call to db
 
     this.setState({
       // jsonObj: jsonData,
@@ -47,7 +48,6 @@ class VizPanel extends React.Component {
       selectedComment: jsonData.nodes[0]
     }, () => {
       this.generateCharts();
-      this.sendRequestForArtist();
     });
 
   };
@@ -55,14 +55,6 @@ class VizPanel extends React.Component {
   componentWillReceiveProps() {
     // console.log('PROPS IN VIZPANEL', this.props.settings)
     setTimeout(() => this.generateCharts(), 100)
-  }
-
-  sendRequestForArtist() {
-    // var artistName = 'Young Thug';
-    // axios.get('/api/getArtistData', {params: {artistName}})
-    // .then((res) => {
-    //   console.log('ARTIST DATA', res.data)
-    // })
   }
 
   generateCharts() {
@@ -205,20 +197,6 @@ if (label === 'text') {
 
     node.on('click',  function(d){
       console.log('selected node', d)
-      var tooltip = tip()
-      .attr('class', 'd3-tip')
-      .attr('id', `tipo${d.id}`)
-      .offset([-10, 0])
-
-      node.call(tooltip)
-      tooltip.show(d)
-
-      ReactDOM.render(<ReplyButton id={d.id+'open'} parent={d} openReplyCb={openReply} tooltipo={tooltip}/>, document.getElementById(`tipo${d.id}`));
-
-      function openReply() {
-        ReactDOM.unmountComponentAtNode(document.getElementById(`tipo${d.id}`))
-        ReactDOM.render(<ReplyToComment id={d.id+'reply'} parent={d} replyToCommentCallback={that.replyToCommentCallback} tooltipo={tooltip}/>, document.getElementById(`tipo${d.id}`));
-      }
 
       var relatedLinks = that.state.linksLibrary.filter(link => {
         return link.source.id === d.id || link.target.id === d.id;
@@ -229,23 +207,27 @@ if (label === 'text') {
       // $('.link').css('display', 'none')
       $(`.${d.id}.link`).css('display', 'inline')
 
+      var position = that.getTooltipPosition(d)
+
+      console.log('POSITION', position)
       that.setState({
         selectedComment: d,
         display: 'artist',
-        links: relatedLinks
+        showTooltip: true,
+        tooltipPosition: position
       }, () => {
         console.log('comment in state', that.state.selectedComment)
         // this.generateCharts();
       })
     })
-    .on('mouseover', d => {
-      this.setState({
-        selectedComment: d,
-        display: 'artist'
-      })
 
-    })
-    // .on('mouseout', tooltip.hide)
+    // .on('mouseover', d => {
+    //   this.setState({
+    //     selectedComment: d,
+    //     display: 'comment'
+    //   })
+    // })
+
 
       nodes.on("tick", function() {
         link.attr("x1", function(d) { return d.source.x; })
@@ -261,12 +243,22 @@ if (label === 'text') {
 
   };
 
+  getTooltipPosition(d) {
+    console.log('NODE TO GET POSITION OF', d)
+    var newLeft = (parseInt(d.x)-5).toString()+'px';
+    var newTop = (parseInt(d.y)).toString()+'px';
+    var outputObj = {
+      position: 'absolute',
+      left: newLeft,
+      top: newTop
+    }
+    console.log('OUTPUT OBJ', outputObj)
+    return outputObj;
+  }
+
   replyToCommentCallback(comment, reply) {
-    ReactDOM.unmountComponentAtNode(document.getElementById(`tipo${comment.id}`))
-    console.log('target comment: ', comment);
-    console.log('new reply: ', reply);
+
     let newId = `${'C'+this.state.commentsLibrary.length}`
-    console.log('NEW ID', newId)
     let newReplyObj = { id: newId, text: reply, level: comment.level+1, children: [], parent: comment.id , author: "User" };
     let commentIds = this.state.commentsLibrary.reduce((acc, curr) => {acc.push(curr.id); return acc;}, []);
     let parentCommentInd = commentIds.indexOf(comment.id);
@@ -275,14 +267,20 @@ if (label === 'text') {
     updatedComments.push(newReplyObj);
     let updatedLinks = this.state.linksLibrary.slice()
     updatedLinks.push(newLinkObj);
-    console.log('updated comments', updatedComments);
-    console.log('updated links', updatedLinks)
+
     this.setState({
       comments: updatedComments,
       commentsLibrary: updatedComments,
       links: updatedLinks,
-      linksLibrary: updatedLinks
+      linksLibrary: updatedLinks,
+      showCommentEntry: false
     }, this.generateCharts)
+  }
+
+  handleCancel = () => {
+    this.setState({
+      showCommentEntry: false
+    })
   }
 
   getNodeSize(level) {
@@ -342,26 +340,16 @@ if (label === 'text') {
     })
   };
 
-  addCommentCB(text, replyComment) {
-    let newId = this.state.commentsLibrary.length;
-    let newLevel = replyComment.level+1;
-    let newParent = replyComment.id;
-    let newCommentObj = { id: newId, text: text, level: newLevel, children: null, parent: newParent, author: "newUserComment" };
-    var newComments = this.state.commentsLibrary;
-    var newLinkObj = { source: newParent, target: newId, value: 1 }
-    var newLinks = this.state.linksLibrary;
-    newLinks.push(newLinkObj);
-    newComments.push(newCommentObj);
+  showReplyCallback = () => {
     this.setState({
-      commentsLibrary: newComments,
-      comments: newComments,
-      linksLibrary: newLinks,
-      links: newLinks
-    }, this.generateCharts)
+      showTooltip: false,
+      showCommentEntry: true
+    })
   }
 
   render() {
     return (
+      <div>
         <Grid fluid={true}>
 
           <Row>
@@ -393,6 +381,13 @@ if (label === 'text') {
           </Row>
 
         </Grid>
+        {this.state.showTooltip ? (
+          <ReplyButton parent={this.state.selectedComment} style={this.state.tooltipPosition} showReplyCallback={this.showReplyCallback}/>
+        ) : ''}
+        { this.state.showCommentEntry ? (
+          <ReplyToComment parent={this.state.selectedComment} replyToCommentCallback={this.replyToCommentCallback} style={this.state.tooltipPosition} handleCancel={this.handleCancel}/>
+        ) : ''}
+        </div>
     )
   }
 
