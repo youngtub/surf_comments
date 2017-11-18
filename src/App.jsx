@@ -40,11 +40,13 @@ class App extends Component {
       <div className="App">
         <header className="App-header">
           <ScrollableAnchor id={'main'}>
-          <h2> Comments </h2>
+            <div>
+              <h2 className='Balmain'> Surf </h2>
+              <h2> Comments </h2>
+            </div>
           </ScrollableAnchor>
         </header>
         <Grid fluid={true}>
-
 
         <Row>
           <Col md={2}>
@@ -74,14 +76,7 @@ class App extends Component {
         </Row>
         </ScrollableAnchor>*/}
 
-        <Row>
-          <Col md={12} style={surfStyle}>
-            <div style={surfStyle}>
-              {/*<a style={black}> Powered by </a>*/}
-              <h2 className='Balmain'> Surf </h2>
-              </div>
-              </Col>
-            </Row>
+
         </Grid>
       </div>
     );

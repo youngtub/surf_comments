@@ -23,7 +23,8 @@ class VizPanel extends React.Component {
       selectedLink: {},
       display: '',
       showTooltip: false,
-      tooltipPosition: {}
+      tooltipPosition: {},
+      likedComment: false
     }
     this.generateCharts = this.generateCharts.bind(this);
     this.applySurchCb = this.applySurchCb.bind(this);
@@ -212,6 +213,7 @@ if (label === 'text') {
         selectedComment: d,
         display: 'artist',
         showTooltip: true,
+        likedComment: false,
         tooltipPosition: position
       }, () => {
         console.log('comment in state', that.state.selectedComment)
@@ -338,11 +340,40 @@ if (label === 'text') {
     })
   };
 
+  likeCommentCallback = () => {
+    if (!this.state.likedComment) {
+      var likedNode = this.state.selectedComment;
+      likedNode.likes+=1;
+      console.log('LIKED NODE', likedNode)
+      this.setState({
+        selectedComment: likedNode,
+        likedComment: true
+      }, () => {
+        console.log('selectedComment', this.state.selectedComment)
+      })
+    }
+  }
+
   showReplyCallback = () => {
     this.setState({
       showTooltip: false,
       showCommentEntry: true
     })
+  };
+
+  changeCommentData = (val) => {
+    console.log('val', val)
+    this.setState({
+      // jsonObj: jsonData,
+      root: jsonData.nodes[0],
+      comments: jsonData.nodes,
+      commentsLibrary: jsonData.nodes,
+      links: jsonData.links,
+      linksLibrary: jsonData.links,
+      selectedComment: jsonData.nodes[0]
+    }, () => {
+      this.generateCharts();
+    });
   }
 
   render() {
@@ -380,7 +411,7 @@ if (label === 'text') {
 
         </Grid>
         {this.state.showTooltip ? (
-          <ReplyButton parent={this.state.selectedComment} style={this.state.tooltipPosition} showReplyCallback={this.showReplyCallback}/>
+          <ReplyButton parent={this.state.selectedComment} style={this.state.tooltipPosition} showReplyCallback={this.showReplyCallback} likeCommentCallback={this.likeCommentCallback}/>
         ) : ''}
         { this.state.showCommentEntry ? (
           <ReplyToComment parent={this.state.selectedComment} replyToCommentCallback={this.replyToCommentCallback} style={this.state.tooltipPosition} handleCancel={this.handleCancel}/>
@@ -397,63 +428,27 @@ const border = {
 
 const jsonData = {
   "nodes": [
-  { id: 'C0', text: 'My dogs curious face', level: 0, children: [1, 2, 3], parent: null, author: 'BeagleBob7', url: "http://www.animalgenetics.us/images/canine/Beagle4.jpg"},
-  { id: 'C1', text: 'Same here! I think its a beagle thing', level: 1, children: [ 4, 5 ], parent: 'C0', author: "catnip47" },
-  { id: 'C2', text: 'Classic 30 degree head tilt', level: 1, children: [ 6 ], parent: 'C0', author: "jackrabbit5" },
-  { id: 'C3', text: 'When theres a treat in smellshot', level: 1, children: [ 7 ], parent: 'C0', author: "meanstack91" },
-  { id: 'C4', text: 'Nah my lab does too', level: 2, children: [ 8 ], parent: 'C1', author: "hooplahadup" },
-  { id: 'C5', text: 'Maybe! My pup does the same thing', level: 2, children: [], parent: 'C1', author: "bballoo" },
-  { id: 'C6', text: 'Lol u measured that shit', level: 2, children: [ 9 ], parent: 'C2', author: "timpumbo" },
-  { id: 'C7', text: 'Smellshot hahahaha', level: 2, children: [], parent: 'C3', author: "skrrrttt88" },
-  { id: 'C8', text: 'Agreed ya my dalmation been doing this since she was born', level: 3, children: [], parent: 'C4', author: "lil uzi horizont" },
-  { id: 'C9', text: 'eyeballed then verified with protractor mate', level: 3, children: [], parent: 'C6' , author: "bathtub gin"} ],
+  { id: 'C0', text: 'My dogs curious face', level: 0, children: [1, 2, 3], parent: null, likes: 2, author: 'BeagleBob7', url: "http://www.animalgenetics.us/images/canine/Beagle4.jpg"},
+  { id: 'C1', text: 'Same here! I think its a beagle thing', level: 1, children: [ 4, 5 ], parent: 'C0', likes: 0, author: "catnip47" },
+  { id: 'C2', text: 'Classic 30 degree head tilt', level: 1, children: [ 6 ], parent: 'C0', likes: 3, author: "jackrabbit5" },
+  { id: 'C3', text: 'When theres a treat in smellshot', level: 1, children: [ 7 ], parent: 'C0', likes: 2, author: "meanstack91" },
+  { id: 'C4', text: 'Nah my lab does too', level: 2, children: [ 8 ], parent: 'C1', likes: 1, author: "hooplahadup" },
+  { id: 'C5', text: 'Maybe! My pup does the same thing', level: 2, children: [], parent: 'C1', likes: 0, author: "bballoo" },
+  { id: 'C6', text: 'Lol u measured that shit', level: 2, children: [ 9 ], parent: 'C2', likes: 0, author: "timpumbo" },
+  { id: 'C7', text: 'Smellshot hahahaha', level: 2, children: [], parent: 'C3', likes: 2, author: "skrrrttt88" },
+  { id: 'C8', text: 'Agreed ya my dalmation been doing this since she was born', level: 3, children: [], parent: 'C4', likes: 1, author: "lil uzi horizont" },
+  { id: 'C9', text: 'eyeballed then verified with protractor mate', level: 3, children: [], parent: 'C6' , likes: 0, author: "bathtub gin"} ],
 
   "links": [
   { source: 0, target: 1, value: 1 },
   { source: 0, target: 2, value: 1 },
   { source: 0, target: 3, value: 1 },
-  // { source: 0, target: 4, value: 0 },
-  // { source: 0, target: 5, value: 0 },
-  // { source: 0, target: 6, value: 0 },
-  // { source: 0, target: 7, value: 0 },
-  // { source: 0, target: 8, value: 0 },
-  // { source: 0, target: 9, value: 0 },
-  // { source: 1, target: 2, value: 0 },
-  // { source: 1, target: 3, value: 0 },
   { source: 1, target: 4, value: 1 },
   { source: 1, target: 5, value: 1 },
-  // { source: 1, target: 6, value: 0 },
-  // { source: 1, target: 7, value: 0 },
-  // { source: 1, target: 8, value: 0 },
-  // { source: 1, target: 9, value: 0 },
-  // { source: 2, target: 3, value: 0 },
-  // { source: 2, target: 4, value: 0 },
-  // { source: 2, target: 5, value: 0 },
   { source: 2, target: 6, value: 1 },
-  // { source: 2, target: 7, value: 0 },
-  // { source: 2, target: 8, value: 0 },
-  // { source: 2, target: 9, value: 0 },
-  // { source: 3, target: 4, value: 0 },
-  // { source: 3, target: 5, value: 0 },
-  // { source: 3, target: 6, value: 0 },
   { source: 3, target: 7, value: 1 },
-  // { source: 3, target: 8, value: 0 },
-  // { source: 3, target: 9, value: 0 },
-  // { source: 4, target: 5, value: 0 },
-  // { source: 4, target: 6, value: 0 },
-  // { source: 4, target: 7, value: 0 },
   { source: 4, target: 8, value: 1 },
-  // { source: 4, target: 9, value: 0 },
-  // { source: 5, target: 6, value: 0 },
-  // { source: 5, target: 7, value: 0 },
-  // { source: 5, target: 8, value: 0 },
-  // { source: 5, target: 9, value: 0 },
-  // { source: 6, target: 7, value: 0 },
-  // { source: 6, target: 8, value: 0 },
-  { source: 6, target: 9, value: 1 },
-  // { source: 7, target: 8, value: 0 },
-  // { source: 7, target: 9, value: 0 },
-  // { source: 8, target: 9, value: 0 }
+  { source: 6, target: 9, value: 1 }
   ]
 }
 
