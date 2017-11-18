@@ -15,7 +15,6 @@
     "jsonfile": "^4.0.0",
     "npm": "^5.5.1",
     "path": "^0.12.7",
-    "rc-upload": "^2.4.4",
     "react": "^16.0.0",
     "react-autosuggest": "^9.3.2",
     "react-bootstrap": "^0.31.5",
