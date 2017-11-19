@@ -79,7 +79,7 @@ class App extends Component {
           <Contribute />
         </Row>
         </ScrollableAnchor>*/}
-
+        <br/><br/><br/><br/><br/><br/><br/><br/>
         <Row>
           <Col md={5}>
             <h5>Linear Representation of same comments</h5>
