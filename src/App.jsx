@@ -40,10 +40,14 @@ class App extends Component {
       <div className="App">
         <header className="App-header">
           <ScrollableAnchor id={'main'}>
-            <div>
-              <h2 className='Balmain'> Surf </h2>
-              <h2> Comments </h2>
-            </div>
+            <Row>
+              <Col md={1}>
+                <h2 className='Balmain'> Surf </h2>
+              </Col>
+              <Col md={1}>
+                <h2 style={movieHeaderStyle}> Comments </h2>
+              </Col>
+            </Row>
           </ScrollableAnchor>
         </header>
         <Grid fluid={true}>
@@ -76,11 +80,29 @@ class App extends Component {
         </Row>
         </ScrollableAnchor>*/}
 
-
+        <Row>
+          <Col md={5}>
+            <h5>Linear Representation of same comments</h5>
+            <iframe src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2Fpermalink.php%3Fstory_fbid%3D311850872627538%26id%3D100014078829018&width=500" style={fbPostStyle} scrolling="no" frameBorder="0" allowTransparency="true"></iframe>
+          </Col>
+        </Row>
         </Grid>
       </div>
     );
   }
+}
+
+const movieHeaderStyle = {
+  marginLeft: '24%',
+  marginTop: '7%',
+  fontFamily: 'Montserrat',
+  fontSize: '38px'
+}
+
+const fbPostStyle = {
+  marginTop: '10vh',
+  width: '40vw',
+  height: '40vh'
 }
 
 const surfStyle = {
