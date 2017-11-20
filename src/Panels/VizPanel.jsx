@@ -4,6 +4,7 @@ import InfoPanel from './InfoPanel';
 import Surch from '../Surch/Surch';
 import ReplyToComment from '../Sections/ReplyToComment';
 import ReplyButton from '../Sections/ReplyButton';
+import Presets from '../Sections/Presets';
 import {Grid, Row, Col, ListGroup, ListGroupItem, Button} from 'react-bootstrap';
 import $ from 'jquery';
 import axios from 'axios';
@@ -39,12 +40,12 @@ class VizPanel extends React.Component {
 
     this.setState({
       // jsonObj: jsonData,
-      root: jsonData.nodes[0],
-      comments: jsonData.nodes,
-      commentsLibrary: jsonData.nodes,
-      links: jsonData.links,
-      linksLibrary: jsonData.links,
-      selectedComment: jsonData.nodes[0]
+      root: jsonData["initial"].nodes[0],
+      comments: jsonData["initial"].nodes,
+      commentsLibrary: jsonData["initial"].nodes,
+      links: jsonData["initial"].links,
+      linksLibrary: jsonData["initial"].links,
+      selectedComment: jsonData["initial"].nodes[0]
     }, () => {
       this.generateCharts();
     });
@@ -68,7 +69,7 @@ class VizPanel extends React.Component {
         .attr("width", width)
         .attr("height", height);
 
-    var linkDistance = this.props.settings.linkDistance || 250;
+    var linkDistance = this.props.settings.linkDistance || 230;
     var circleSize = this.props.settings.circleSize || 15;
     var artistNum = this.props.settings.artistNumber || 7;
     var roles = this.props.settings.roles || ['rapper', 'producer'];
@@ -79,20 +80,15 @@ class VizPanel extends React.Component {
     .force("link", d3.forceLink(this.state.linksLibrary)
       .distance((d) => {
         return d.value > 0 ? linkDistance/(d.value*1.5) : linkDistance;
-      })
-      // .strength((d) => {
-      //   return d.value > 0 ? d.value : 0;
-      // })
-      )
+      }))
     .force("center", d3.forceCenter(420, 380))
-    .force("gravity", d3.forceManyBody().strength(-100))
-    // .force("distance", d3.forceManyBody(100))
-
+    .force("gravity", d3.forceManyBody().strength(-40))
     .force('collision', d3.forceCollide().radius(function(d) {
       // console.log('RADD', d)
-      return 10
+      return 30
     }))
-    .force("size", d3.forceManyBody([width, height]));
+    .force("size", d3.forceManyBody([width, height]))
+
 
     var link = svg.selectAll(".link").data(this.state.linksLibrary).enter()
         .append("line")
@@ -119,6 +115,9 @@ var node = svg.selectAll(".node").data(this.state.comments).enter()
     );
 
 function dragstarted() {
+  that.setState({
+    showTooltip: false
+  })
   if (!d3.event.active) nodes.alphaTarget(0.3).restart();
   d3.event.subject.fx = d3.event.subject.x;
   d3.event.subject.fy = d3.event.subject.y;
@@ -228,7 +227,6 @@ if (label === 'text') {
     //   })
     // })
 
-
       nodes.on("tick", function() {
         link.attr("x1", function(d) { return d.source.x; })
             .attr("y1", function(d) { return d.source.y; })
@@ -274,7 +272,10 @@ if (label === 'text') {
       links: updatedLinks,
       linksLibrary: updatedLinks,
       showCommentEntry: false
-    }, this.generateCharts)
+    }, () => {
+      this.generateCharts();
+      this.props.fakePassStateToViz()
+    })
   }
 
   handleCancel = () => {
@@ -365,14 +366,15 @@ if (label === 'text') {
     console.log('val', val)
     this.setState({
       // jsonObj: jsonData,
-      root: jsonData.nodes[0],
-      comments: jsonData.nodes,
-      commentsLibrary: jsonData.nodes,
-      links: jsonData.links,
-      linksLibrary: jsonData.links,
-      selectedComment: jsonData.nodes[0]
+      root: jsonData[val].nodes[0],
+      comments: jsonData[val].nodes,
+      commentsLibrary: jsonData[val].nodes,
+      links: jsonData[val].links,
+      linksLibrary: jsonData[val].links,
+      selectedComment: jsonData[val].nodes[0]
     }, () => {
       this.generateCharts();
+      this.props.fakePassStateToViz()
     });
   }
 
@@ -389,21 +391,23 @@ if (label === 'text') {
 
             <Col md={3} style={border}>
 
-              { this.props.showPanels ? (
-                  <div>
+
                   <Row className="show-grid">
+                    { this.props.showPanels ? (
                     <InfoPanel selectedComment={this.state.selectedComment} selectedLink={this.state.selectedLink}
                       display={this.state.display} comments={this.state.comments}
                       links={this.state.linksLibrary} root={this.state.root}
                       infoPanelCallback={this.infoPanelCallback} addCommentCB={this.addCommentCB}
-                      />
+                      /> ) : <div style={infoPlaceholder}></div> }
                   </Row>
-
-                  <Row className="show-grid">
+                  {/*<Row className="show-grid">
                     <Surch allArtists={this.state.artistsLibrary} applySurchCb={this.applySurchCb} reset={this.resetSurchCb}/>
-                  </Row>
-                  </div>
-                ) : '' }
+                  </Row>*/}
+
+
+                <Row>
+                  <Presets changeCommentData={this.changeCommentData}/>
+                </Row>
 
             </Col>
 
@@ -426,30 +430,70 @@ const border = {
   // border: 'solid black 1px'
 }
 
-const jsonData = {
-  "nodes": [
-  { id: 'C0', text: 'My dogs curious face', level: 0, children: [1, 2, 3], parent: null, likes: 2, author: 'BeagleBob7', url: "http://www.animalgenetics.us/images/canine/Beagle4.jpg"},
-  { id: 'C1', text: 'Same here! I think its a beagle thing', level: 1, children: [ 4, 5 ], parent: 'C0', likes: 0, author: "catnip47" },
-  { id: 'C2', text: 'Classic 30 degree head tilt', level: 1, children: [ 6 ], parent: 'C0', likes: 3, author: "jackrabbit5" },
-  { id: 'C3', text: 'When theres a treat in smellshot', level: 1, children: [ 7 ], parent: 'C0', likes: 2, author: "meanstack91" },
-  { id: 'C4', text: 'Nah my lab does too', level: 2, children: [ 8 ], parent: 'C1', likes: 1, author: "hooplahadup" },
-  { id: 'C5', text: 'Maybe! My pup does the same thing', level: 2, children: [], parent: 'C1', likes: 0, author: "bballoo" },
-  { id: 'C6', text: 'Lol u measured that shit', level: 2, children: [ 9 ], parent: 'C2', likes: 0, author: "timpumbo" },
-  { id: 'C7', text: 'Smellshot hahahaha', level: 2, children: [], parent: 'C3', likes: 2, author: "skrrrttt88" },
-  { id: 'C8', text: 'Agreed ya my dalmation been doing this since she was born', level: 3, children: [], parent: 'C4', likes: 1, author: "lil uzi horizont" },
-  { id: 'C9', text: 'eyeballed then verified with protractor mate', level: 3, children: [], parent: 'C6' , likes: 0, author: "bathtub gin"} ],
+const infoPlaceholder = {
+  height: '60vh'
+}
 
-  "links": [
-  { source: 0, target: 1, value: 1 },
-  { source: 0, target: 2, value: 1 },
-  { source: 0, target: 3, value: 1 },
-  { source: 1, target: 4, value: 1 },
-  { source: 1, target: 5, value: 1 },
-  { source: 2, target: 6, value: 1 },
-  { source: 3, target: 7, value: 1 },
-  { source: 4, target: 8, value: 1 },
-  { source: 6, target: 9, value: 1 }
-  ]
+const jsonData = {
+
+  "initial" : {
+    "nodes": [
+      {id: 'C0', text: 'A dumb post; click to comment', level: 0, children: [], parent: null, likes: 0, author: 'tub'}
+    ],
+    "links": []
+  },
+  "dogs": {
+      "nodes": [
+        { id: 'C0', text: 'My dogs curious face', level: 0, children: [1, 2, 3], parent: null, likes: 2, author: 'BeagleBob7', url: "http://www.animalgenetics.us/images/canine/Beagle4.jpg"},
+        { id: 'C1', text: 'Same here! I think its a beagle thing', level: 1, children: [ 4, 5 ], parent: 'C0', likes: 0, author: "catnip47" },
+        { id: 'C2', text: 'Classic 30 degree head tilt', level: 1, children: [ 6 ], parent: 'C0', likes: 3, author: "jackrabbit5" },
+        { id: 'C3', text: 'When theres a treat in smellshot', level: 1, children: [ 7 ], parent: 'C0', likes: 2, author: "meanstack91" },
+        { id: 'C4', text: 'Nah my lab does too', level: 2, children: [ 8 ], parent: 'C1', likes: 1, author: "hooplahadup" },
+        { id: 'C5', text: 'Maybe! My pup does the same thing', level: 2, children: [], parent: 'C1', likes: 0, author: "bballoo" },
+        { id: 'C6', text: 'Lol u measured that shit', level: 2, children: [ 9 ], parent: 'C2', likes: 0, author: "timpumbo" },
+        { id: 'C7', text: 'Smellshot hahahaha', level: 2, children: [], parent: 'C3', likes: 2, author: "skrrrttt88" },
+        { id: 'C8', text: 'Agreed ya my dalmation been doing this since she was born', level: 3, children: [], parent: 'C4', likes: 1, author: "lil uzi horizont" },
+        { id: 'C9', text: 'eyeballed then verified with protractor mate', level: 3, children: [], parent: 'C6' , likes: 0, author: "bathtub gin"}
+      ],
+        "links": [
+          { source: 0, target: 1, value: 1 },
+          { source: 0, target: 2, value: 1 },
+          { source: 0, target: 3, value: 1 },
+          { source: 1, target: 4, value: 1 },
+          { source: 1, target: 5, value: 1 },
+          { source: 2, target: 6, value: 1 },
+          { source: 3, target: 7, value: 1 },
+          { source: 4, target: 8, value: 1 },
+          { source: 6, target: 9, value: 1 }
+        ]
+    },
+    "politics" : {
+      "nodes": [
+        { id: 'C0', text: "Trump: 'I should have left them in jail!' ", level: 0, children: [1, 2], parent: null, likes: 2, author: 'BeagleBob7', url: "http://static4.businessinsider.com/image/59c7cd6a19d2f58d008b5284/trump-administration-officials-play-defense-over-backlash-to-his-comments-about-nfl-and-nba-players.jpg"},
+        { id: 'C1', text: 'I mean...why they steal in China...', level: 1, children: [ 3 ], parent: 'C0', likes: 0, author: "catnip47" },
+        { id: 'C2', text: 'Unbelievable! Hes dirtying sports now too', level: 1, children: [ 4, 5 ], parent: 'C0', likes: 3, author: "jackrabbit5" },
+        { id: 'C3', text: 'Thats not the point', level: 2, children: [ 7 ], parent: 'C1', likes: 2, author: "meanstack91" },
+        { id: 'C4', text: 'good pushback from NBA and NFL officials though', level: 2, children: [ 8 ], parent: 'C2', likes: 1, author: "hooplahadup" },
+        { id: 'C5', text: 'was bound to happen sooner or later', level: 3, children: [], parent: 'C2', likes: 0, author: "bballoo" },
+        { id: 'C6', text: 'Agreed, terrible response', level: 3, children: [ 9 ], parent: 'C3', likes: 0, author: "timpumbo" },
+        { id: 'C7', text: 'Lol ok sure...', level: 3, children: [], parent: 'C3', likes: 2, author: "skrrrttt88" },
+        { id: 'C8', text: 'LeBron said it straight up! lol', level: 3, children: [], parent: 'C4', likes: 1, author: "lil uzi horizont" },
+        { id: 'C9', text: 'He got em out of a Chinese jail tho right', level: 4, children: [], parent: 'C6' , likes: 0, author: "bathtub gin"},
+        { id: 'C10', text: 'Sigh....NO!', level: 1, children: [], parent: 'C0' , likes: 0, author: "bathtub gin"}
+      ],
+        "links": [
+          { source: 0, target: 1, value: 1 },
+          { source: 0, target: 2, value: 1 },
+          { source: 0, target: 10, value: 1 },
+          { source: 1, target: 3, value: 1 },
+          { source: 2, target: 4, value: 1 },
+          { source: 2, target: 5, value: 1 },
+          { source: 3, target: 6, value: 1 },
+          { source: 3, target: 7, value: 1 },
+          { source: 4, target: 8, value: 1 },
+          { source: 6, target: 9, value: 1 }
+        ]
+    }
 }
 
 export default VizPanel;

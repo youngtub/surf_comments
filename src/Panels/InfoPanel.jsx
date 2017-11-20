@@ -31,7 +31,7 @@ constructor(props) {
 
   render() {
     return (
-      <div id='infoPanel'>
+      <div id='infoPanel' style={newInfoStyle}>
         <br/>
         <Grid fluid={true}>
           <Row>
@@ -72,6 +72,11 @@ constructor(props) {
     )
   }
 };
+
+const newInfoStyle = {
+  width: '50%',
+  float: 'right'
+}
 
 const centered = {
   textAlign: "center",

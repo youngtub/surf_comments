@@ -35,6 +35,22 @@ class App extends Component {
     })
   }
 
+  fakePassStateToViz = () => {
+    setTimeout( () => {
+      var settings = {
+      showLinks: false,
+      roles: ['rapper', 'producer'],
+      label: 'circles',
+      circleSize: 15,
+      linkDistance: 230,
+      artistNumber: 7,
+    }
+    this.setState({
+      settingsObj: settings
+    })
+  }, 1000);
+  }
+
   render() {
     return (
       <div className="App">
@@ -58,7 +74,7 @@ class App extends Component {
           </Col>
 
           <Col md={10}>
-            <VizPanel settings={this.state.settingsObj} showPanels={this.state.showPanels}/>
+            <VizPanel settings={this.state.settingsObj} showPanels={this.state.showPanels} fakePassStateToViz={this.fakePassStateToViz }/>
           </Col>
 
         </Row>
@@ -80,12 +96,12 @@ class App extends Component {
         </Row>
         </ScrollableAnchor>*/}
         <br/><br/><br/><br/><br/><br/><br/><br/>
-        <Row>
+        {/*<Row>
           <Col md={5}>
             <h5>Linear Representation of same comments</h5>
             <iframe src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2Fpermalink.php%3Fstory_fbid%3D311850872627538%26id%3D100014078829018&width=500" style={fbPostStyle} scrolling="no" frameBorder="0" allowTransparency="true"></iframe>
           </Col>
-        </Row>
+        </Row>*/}
         </Grid>
       </div>
     );

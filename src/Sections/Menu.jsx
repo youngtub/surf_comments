@@ -12,17 +12,7 @@ class MenuBar extends React.Component {
   }
 
   componentDidMount() {
-    setTimeout( () => {
-      var settings = {
-      showLinks: false,
-      roles: ['rapper', 'producer'],
-      label: 'circles',
-      circleSize: 15,
-      linkDistance: 230,
-      artistNumber: 7,
-    }
-    this.props.passStateInSettings(settings)
-  }, 700);
+
   }
 
   toggleCollapsed = () => {
