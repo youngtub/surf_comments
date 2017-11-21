@@ -15,6 +15,7 @@ const ReplyButton = (props) => {
   const styleTooltip = () => {
     var positionObj = props.style;
     console.log('positionObj', positionObj)
+    positionObj['width'] ? null : positionObj['width'] = '9vw'
     positionObj['padding'] ? null : positionObj['padding'] = '15px';
     positionObj['backgroundColor'] ? null : positionObj['backgroundColor'] = '#424B54';
     positionObj['textAlign'] ? null : positionObj['textAlign'] = 'center';
@@ -24,13 +25,28 @@ const ReplyButton = (props) => {
   return (
     <Grid style={styleTooltip()} fluid={true}>
       <Row>
-        <Button onClick={handleOpen} size='small'>Reply ({props.parent.children.length || 0}) </Button>
+        <p style={commentText}>{props.parent.text}</p>
       </Row>
       <Row>
-        <Button onClick={handleLike} size='small' icon='like'>({props.parent.likes || 0})</Button>
+        <Col md={5}>
+          <Button onClick={handleLike} size='small' icon='like'>({props.parent.likes || 0})</Button>
+        </Col>
+        <Col md={5}>
+          <Button onClick={handleOpen} size='small'>Reply ({props.parent.children.length || 0}) </Button>
+        </Col>
+      </Row>
+      <Row>
+        <Col md={3}>
+          <Button onClick={props.closeTooptipCb} size='small' icon='rollback'>Close</Button>
+        </Col>
       </Row>
     </Grid>
   )
+}
+
+const commentText = {
+  fontSize: '14px',
+  color: '#efefef'
 }
 
 export default ReplyButton;

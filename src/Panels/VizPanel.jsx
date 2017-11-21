@@ -9,6 +9,8 @@ import {Grid, Row, Col, ListGroup, ListGroupItem, Button} from 'react-bootstrap'
 import $ from 'jquery';
 import axios from 'axios';
 import ReactDOM from 'react-dom';
+import clamp from 'clamp-js';
+import ellipsis from 'text-ellipsis';
 
 class VizPanel extends React.Component {
   constructor(props) {
@@ -25,7 +27,8 @@ class VizPanel extends React.Component {
       display: '',
       showTooltip: false,
       tooltipPosition: {},
-      likedComment: false
+      likedComment: false,
+      level: 0
     }
     this.generateCharts = this.generateCharts.bind(this);
     this.applySurchCb = this.applySurchCb.bind(this);
@@ -69,23 +72,23 @@ class VizPanel extends React.Component {
         .attr("width", width)
         .attr("height", height);
 
-    var linkDistance = this.props.settings.linkDistance || 230;
-    var circleSize = this.props.settings.circleSize || 15;
+    var linkDistance = this.props.settings.linkDistance || 280;
+    var circleSize = this.props.settings.circleSize || 25;
     var artistNum = this.props.settings.artistNumber || 7;
     var roles = this.props.settings.roles || ['rapper', 'producer'];
     var label = this.props.settings.label || 'circles';
 
     var nodes = d3.forceSimulation(this.state.commentsLibrary)
-    .force("charge", d3.forceManyBody().strength(-150))
+    .force("charge", d3.forceManyBody().strength(-200))
     .force("link", d3.forceLink(this.state.linksLibrary)
       .distance((d) => {
         return d.value > 0 ? linkDistance/(d.value*1.5) : linkDistance;
       }))
     .force("center", d3.forceCenter(420, 380))
-    .force("gravity", d3.forceManyBody().strength(-40))
+    .force("gravity", d3.forceManyBody().strength(-200))
     .force('collision', d3.forceCollide().radius(function(d) {
       // console.log('RADD', d)
-      return 30
+      return circleSize*2
     }))
     .force("size", d3.forceManyBody([width, height]))
 
@@ -176,18 +179,34 @@ if (label === 'text') {
       .attr("fill", d => colors[d.level])
       .attr("class", (d) => `${d.id} node`);
 
-  node.append("text")
-      .attr("dx", d => d.id === 'C0' ? -(circleSize*5) : this.getNodeSize(d.level)+15)
-      .attr("dy", d => d.id === 'C0' ? -20 : 0)
-      .text(function(d) { return d.text })
+  node.append("foreignObject")
+      .attr('width', d => {
+        var w = 6 - d.level;
+        return `${w}vw`
+      })
+      .attr('height', d => {
+        var h = 10 - d.level;
+        return `${h}vh`
+      })
+      .attr('x', d=> -this.getNodeSize(d.level) + 5)
+      .attr('y', d=> -this.getNodeSize(d.level))
+      .html( d => {
+        var chars = 7*(6-d.level);
+        var short = ellipsis(d.text, chars);
+        return `<div>${short}</div>`
+      })
+      .style('overflow', 'hidden')
+      .style('text-overflow', 'ellipsis')
       .style("font-size", "14px")
-      .style("fill", (d) => d.id === 'C0' ? '#eff0f2' : '#1b1b1c')
+      .style("color", (d) => d.id === 'C0' ? '#eff0f2' : '#efefef')
+      .style('visibility', d => d.level+this.state.level < 3 ? 'visible' : 'hidden')
+      .attr('class',d=> `${d.id} ${d.level} comment`)
 
   node.append("svg:image")
-      .attr('x', d => -this.getNodeSize(d.level))
-      .attr('y', d => -0.4*this.getNodeSize(d.level))
-      .attr('width', d => 2*this.getNodeSize(d.level))
-      .attr('height', d => 2*this.getNodeSize(d.level))
+      .attr('x', d => -0.5*this.getNodeSize(d.level))
+      .attr('y', d => -0.2*this.getNodeSize(d.level))
+      .attr('width', d => this.getNodeSize(d.level))
+      .attr('height', d => this.getNodeSize(d.level))
       .attr("border-radius", '50%')
       .attr("xlink:href", (d) => `${d.url || ''}`)
 
@@ -204,7 +223,8 @@ if (label === 'text') {
 
       // $('.link').css('display', 'none')
       $(`.${d.id}.link`).css('display', 'inline')
-
+      $(`.${d.level+1}.comment`).css('visibility', 'visible')
+      // $(`.${d.level+2}.comment`).css('visibility', 'visible')
       var position = that.getTooltipPosition(d)
 
       console.log('POSITION', position)
@@ -213,7 +233,8 @@ if (label === 'text') {
         display: 'artist',
         showTooltip: true,
         likedComment: false,
-        tooltipPosition: position
+        tooltipPosition: position,
+        level: d.level
       }, () => {
         console.log('comment in state', that.state.selectedComment)
         // this.generateCharts();
@@ -228,23 +249,23 @@ if (label === 'text') {
     // })
 
       nodes.on("tick", function() {
-        link.attr("x1", function(d) { return d.source.x; })
-            .attr("y1", function(d) { return d.source.y; })
-            .attr("x2", function(d) { return d.target.x; })
-            .attr("y2", function(d) { return d.target.y; });
 
             node.attr("transform", function(d) {
               var xcoord = d.x > width / 2 ? Math.min(d.x, width-circleSize) : Math.max(circleSize, d.x);
               var ycoord = d.y > height / 2 ? Math.min(d.y-30, height-(circleSize+30)) : Math.max(circleSize, d.y);
               return "translate(" + xcoord + "," + ycoord + ")"; });
+            link.attr("x1", function(d) { return d.source.x; })
+                .attr("y1", function(d) { return d.source.y; })
+                .attr("x2", function(d) { return d.target.x; })
+                .attr("y2", function(d) { return d.target.y; });
       });
 
   };
 
   getTooltipPosition(d) {
     console.log('NODE TO GET POSITION OF', d)
-    var newLeft = (parseInt(d.x)-5).toString()+'px';
-    var newTop = (parseInt(d.y)).toString()+'px';
+    var newLeft = (parseInt(d.x)-this.getNodeSize(d.level)).toString()+'px';
+    var newTop = (parseInt(d.y)-1.6*this.getNodeSize(d.level)).toString()+'px';
     var outputObj = {
       position: 'absolute',
       left: newLeft,
@@ -285,7 +306,7 @@ if (label === 'text') {
   }
 
   getNodeSize(level) {
-    let circleSize = this.props.settings.circleSize || 15;
+    let circleSize = this.props.settings.circleSize || 25;
     var sizes = {
       0: circleSize*2.3,
       1: circleSize*1.7,
@@ -371,11 +392,19 @@ if (label === 'text') {
       commentsLibrary: jsonData[val].nodes,
       links: jsonData[val].links,
       linksLibrary: jsonData[val].links,
-      selectedComment: jsonData[val].nodes[0]
+      selectedComment: jsonData[val].nodes[0],
+      showTooltip: false,
+      level: 0
     }, () => {
       this.generateCharts();
       this.props.fakePassStateToViz()
     });
+  }
+
+  closeTooptipCb = () => {
+    this.setState({
+      showTooltip: false
+    })
   }
 
   render() {
@@ -415,7 +444,7 @@ if (label === 'text') {
 
         </Grid>
         {this.state.showTooltip ? (
-          <ReplyButton parent={this.state.selectedComment} style={this.state.tooltipPosition} showReplyCallback={this.showReplyCallback} likeCommentCallback={this.likeCommentCallback}/>
+          <ReplyButton parent={this.state.selectedComment} style={this.state.tooltipPosition} showReplyCallback={this.showReplyCallback} likeCommentCallback={this.likeCommentCallback} closeTooptipCb={this.closeTooptipCb}/>
         ) : ''}
         { this.state.showCommentEntry ? (
           <ReplyToComment parent={this.state.selectedComment} replyToCommentCallback={this.replyToCommentCallback} style={this.state.tooltipPosition} handleCancel={this.handleCancel}/>
@@ -474,7 +503,7 @@ const jsonData = {
         { id: 'C2', text: 'Unbelievable! Hes dirtying sports now too', level: 1, children: [ 4, 5 ], parent: 'C0', likes: 3, author: "jackrabbit5" },
         { id: 'C3', text: 'Thats not the point', level: 2, children: [ 7 ], parent: 'C1', likes: 2, author: "meanstack91" },
         { id: 'C4', text: 'good pushback from NBA and NFL officials though', level: 2, children: [ 8 ], parent: 'C2', likes: 1, author: "hooplahadup" },
-        { id: 'C5', text: 'was bound to happen sooner or later', level: 3, children: [], parent: 'C2', likes: 0, author: "bballoo" },
+        { id: 'C5', text: 'was bound to happen sooner or later', level: 2, children: [], parent: 'C2', likes: 0, author: "bballoo" },
         { id: 'C6', text: 'Agreed, terrible response', level: 3, children: [ 9 ], parent: 'C3', likes: 0, author: "timpumbo" },
         { id: 'C7', text: 'Lol ok sure...', level: 3, children: [], parent: 'C3', likes: 2, author: "skrrrttt88" },
         { id: 'C8', text: 'LeBron said it straight up! lol', level: 3, children: [], parent: 'C4', likes: 1, author: "lil uzi horizont" },

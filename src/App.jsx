@@ -41,8 +41,8 @@ class App extends Component {
       showLinks: false,
       roles: ['rapper', 'producer'],
       label: 'circles',
-      circleSize: 15,
-      linkDistance: 230,
+      circleSize: 25,
+      linkDistance: 280,
       artistNumber: 7,
     }
     this.setState({
