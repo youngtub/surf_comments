@@ -79,13 +79,13 @@ class VizPanel extends React.Component {
     var label = this.props.settings.label || 'circles';
 
     var nodes = d3.forceSimulation(this.state.commentsLibrary)
-    .force("charge", d3.forceManyBody().strength(-230))
+    .force("charge", d3.forceManyBody().strength(-200))
     .force("link", d3.forceLink(this.state.linksLibrary)
       .distance((d) => {
         return d.value > 0 ? linkDistance/(d.value*1.5) : linkDistance;
       }))
     .force("center", d3.forceCenter(420, 380))
-    .force("gravity", d3.forceManyBody().strength(-230))
+    .force("gravity", d3.forceManyBody().strength(-200))
     .force('collision', d3.forceCollide().radius(function(d) {
       // console.log('RADD', d)
       return circleSize*2
