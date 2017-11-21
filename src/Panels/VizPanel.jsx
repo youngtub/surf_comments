@@ -79,13 +79,13 @@ class VizPanel extends React.Component {
     var label = this.props.settings.label || 'circles';
 
     var nodes = d3.forceSimulation(this.state.commentsLibrary)
-    .force("charge", d3.forceManyBody().strength(-200))
+    .force("charge", d3.forceManyBody().strength(-230))
     .force("link", d3.forceLink(this.state.linksLibrary)
       .distance((d) => {
         return d.value > 0 ? linkDistance/(d.value*1.5) : linkDistance;
       }))
     .force("center", d3.forceCenter(420, 380))
-    .force("gravity", d3.forceManyBody().strength(-200))
+    .force("gravity", d3.forceManyBody().strength(-230))
     .force('collision', d3.forceCollide().radius(function(d) {
       // console.log('RADD', d)
       return circleSize*2
@@ -199,7 +199,7 @@ if (label === 'text') {
       .style('text-overflow', 'ellipsis')
       .style("font-size", "14px")
       .style("color", (d) => d.id === 'C0' ? '#eff0f2' : '#efefef')
-      .style('visibility', d => d.level+this.state.level < 3 ? 'visible' : 'hidden')
+      .style('visibility', d => d.level < 3 ? 'visible' : 'hidden')
       .attr('class',d=> `${d.id} ${d.level} comment`)
 
   node.append("svg:image")
@@ -248,6 +248,10 @@ if (label === 'text') {
     //   })
     // })
 
+    for (let i = 0; i <= this.state.level+1; i++) {
+      $(`.${i}.comment`).css('visibility', 'visible')
+    }
+
       nodes.on("tick", function() {
 
             node.attr("transform", function(d) {
@@ -292,7 +296,8 @@ if (label === 'text') {
       commentsLibrary: updatedComments,
       links: updatedLinks,
       linksLibrary: updatedLinks,
-      showCommentEntry: false
+      showCommentEntry: false,
+      level: comment.level
     }, () => {
       this.generateCharts();
       this.props.fakePassStateToViz()
@@ -311,7 +316,11 @@ if (label === 'text') {
       0: circleSize*2.3,
       1: circleSize*1.7,
       2: circleSize*1.3,
-      3: circleSize
+      3: circleSize,
+      4: circleSize,
+      5: circleSize,
+      6: circleSize,
+      7: circleSize
     }
     return sizes[level];
   }
@@ -501,7 +510,7 @@ const jsonData = {
         { id: 'C0', text: "Trump: 'I should have left them in jail!' ", level: 0, children: [1, 2], parent: null, likes: 2, author: 'BeagleBob7', url: "http://static4.businessinsider.com/image/59c7cd6a19d2f58d008b5284/trump-administration-officials-play-defense-over-backlash-to-his-comments-about-nfl-and-nba-players.jpg"},
         { id: 'C1', text: 'I mean...why they steal in China...', level: 1, children: [ 3 ], parent: 'C0', likes: 0, author: "catnip47" },
         { id: 'C2', text: 'Unbelievable! Hes dirtying sports now too', level: 1, children: [ 4, 5 ], parent: 'C0', likes: 3, author: "jackrabbit5" },
-        { id: 'C3', text: 'Thats not the point', level: 2, children: [ 7 ], parent: 'C1', likes: 2, author: "meanstack91" },
+        { id: 'C3', text: 'Thats not the point', level: 2, children: [ 6, 7 ], parent: 'C1', likes: 2, author: "meanstack91" },
         { id: 'C4', text: 'good pushback from NBA and NFL officials though', level: 2, children: [ 8 ], parent: 'C2', likes: 1, author: "hooplahadup" },
         { id: 'C5', text: 'was bound to happen sooner or later', level: 2, children: [], parent: 'C2', likes: 0, author: "bballoo" },
         { id: 'C6', text: 'Agreed, terrible response', level: 3, children: [ 9 ], parent: 'C3', likes: 0, author: "timpumbo" },

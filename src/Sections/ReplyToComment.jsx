@@ -31,8 +31,8 @@ class ReplyToComment extends React.Component {
       <div style={this.props.style}>
         <TextArea value={this.state.val} onChange={this.handleChange} placeholder='enter reply'/>
         <hr/>
-        <Button onClick={this.handleCancel}>Cancel</Button>
         <Button type='primary' onClick={this.handleSubmit}>Submit</Button>
+        <Button onClick={this.handleCancel}>Cancel</Button>
       </div>
     )
   }
